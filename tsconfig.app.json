@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "electron.vite.config.ts"],
+  "exclude": ["node_modules", "out", "release", "backup", "__tests__", "tests"]
+}

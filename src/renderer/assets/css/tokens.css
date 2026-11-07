@@ -1,0 +1,324 @@
+/**
+ * 设计令牌（Codex 风格重构版，2026-11）
+ *
+ * 视觉基准：OpenAI Codex 桌面端
+ *  - 背景三级递进：page（内容区）→ panel（侧栏/顶栏）→ elevated（卡片/浮层），
+ *    侧栏比内容区更暗，靠明度差而非描边区分层级。
+ *  - 文字三级对比：text-1 正文、text-2 次要、text-3 占位/时间戳。
+ *  - 边框用极低透明度（8% / 15%），杜绝深色下的一圈白边。
+ *  - 品牌色 #10a37f 只用在「需要用户行动」的元素上，不做装饰。
+ *  - UI 字体与等宽字体分离，diff / 元信息 / 耗时统一走 mono。
+ *
+ * 兼容约定：原有变量名（--bg-page / --text-1 / --brand 等）全部保留，
+ * 存量 scoped 样式无需改名即可继承新配色；新增变量优先使用。
+ *
+ * 主题机制：useDark 只在 html 上切 .dark 类，:root 为浅色基准，
+ * html.dark 覆盖为深色。Codex 默认深色，App.vue 里把初始值设为 dark。
+ */
+
+:root {
+  /* ================= 背景（浅色基准） ================= */
+  --bg-page: #ffffff; /* 主内容区 */
+  --bg-panel: #f7f7f8; /* 侧栏 / 顶栏 / 预览面板 */
+  --bg-elevated: #ffffff; /* 卡片 / 浮层 */
+  --bg-sunken: #f2f2f3; /* 下沉区块：代码块底、内衬 */
+  --bg-hover: rgba(0, 0, 0, 0.045); /* 悬停反馈 */
+  --bg-active: rgba(0, 0, 0, 0.075); /* 选中/按下 */
+
+  /* ================= 文本 ================= */
+  --text-1: #0d0d0d; /* 正文 / 标题 */
+  --text-2: #5d5d5d; /* 次要说明 */
+  --text-3: #8f8f8f; /* 占位、时间戳、元信息 */
+  --text-secondary: var(--text-2); /* 兼容旧引用（原 tokens 缺失此变量） */
+
+  /* ================= 边框 ================= */
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
+
+  /* ================= 品牌 ================= */
+  --brand: #10a37f;
+  --brand-dark: #0d8a6a; /* hover / 深一档 */
+  --brand-bright: #10a37f; /* 深色下的高亮（图标/强调文字） */
+  --brand-soft: rgba(16, 163, 127, 0.1); /* 品牌色淡底 */
+  --brand-soft-strong: rgba(16, 163, 127, 0.18);
+
+  /* ================= 语义色（供自定义组件直接引用） ================= */
+  --color-success: #2ea043;
+  --color-warning: #d29922;
+  --color-danger: #e5534b;
+  --color-info: #8b949e;
+
+  /* ================= 字体 ================= */
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans SC', Helvetica, Arial, sans-serif;
+  --font-mono:
+    'SFMono-Regular', 'SF Mono', 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'Liberation Mono', 'Courier New',
+    monospace;
+
+  /* ================= 圆角 ================= */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 999px;
+
+  /* ================= 阴影（Codex 极简：只在浮层用，卡片不用） ================= */
+  --shadow-pop: 0 8px 28px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-inset-line: inset -1px 0 0 rgba(0, 0, 0, 0.06);
+
+  /* ================= 布局 ================= */
+  --sidebar-width: 52px; /* 折叠态宽度（存量 fixed 定位依赖此值） */
+  --sidebar-expanded: 244px; /* 展开态宽度 */
+  --titlebar-reserve: 158px; /* 顶栏右侧留给窗口控制按钮（3×46px + 间距） */
+  --topbar-height: 48px;
+  --statusbar-height: 28px;
+
+  /* ================= 动效 ================= */
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+
+  /* ================= Element Plus 品牌色阶梯（浅色） =================
+     primary 以 #10a37f 为基准，light-N 逐级向白混合。 */
+  --el-color-primary: #10a37f;
+  --el-color-primary-light-3: #4fbf9e;
+  --el-color-primary-light-5: #88d4bd;
+  --el-color-primary-light-7: #b9e6d9;
+  --el-color-primary-light-8: #d0eee5;
+  --el-color-primary-light-9: #e7f6f2;
+  --el-color-primary-dark-2: #0d8a6a;
+
+  --el-color-success: #2ea043;
+  --el-color-success-light-3: #57b36a;
+  --el-color-success-light-5: #87c994;
+  --el-color-success-light-7: #b6dfbd;
+  --el-color-success-light-8: #cdead1;
+  --el-color-success-light-9: #e9f6eb;
+  --el-color-success-dark-2: #288c3b;
+
+  --el-color-warning: #d29922;
+  --el-color-warning-light-3: #dcaf52;
+  --el-color-warning-light-5: #e5c684;
+  --el-color-warning-light-7: #efdcb6;
+  --el-color-warning-light-8: #f4e8ce;
+  --el-color-warning-light-9: #faf3e6;
+  --el-color-warning-dark-2: #b9861e;
+
+  --el-color-danger: #e5534b;
+  --el-color-danger-light-3: #ea7a73;
+  --el-color-danger-light-5: #f0a19c;
+  --el-color-danger-light-7: #f7c8c5;
+  --el-color-danger-light-8: #f9d9d7;
+  --el-color-danger-light-9: #fcebea;
+  --el-color-danger-dark-2: #cc4a43;
+
+  --el-color-error: #e5534b;
+  --el-color-error-light-3: #ea7a73;
+  --el-color-error-light-5: #f0a19c;
+  --el-color-error-light-7: #f7c8c5;
+  --el-color-error-light-8: #f9d9d7;
+  --el-color-error-light-9: #fcebea;
+  --el-color-error-dark-2: #cc4a43;
+
+  --el-color-info: #8b949e;
+  --el-color-info-light-3: #a2aab3;
+  --el-color-info-light-5: #b9c0c7;
+  --el-color-info-light-7: #d1d6da;
+  --el-color-info-light-8: #dde1e4;
+  --el-color-info-light-9: #eef0f2;
+  --el-color-info-dark-2: #7a838d;
+
+  /* 中性色阶：Codex 用中性灰而非 Element 默认的偏蓝灰 */
+  --el-text-color-primary: #0d0d0d;
+  --el-text-color-regular: #3d3d3d;
+  --el-text-color-secondary: #5d5d5d;
+  --el-text-color-placeholder: #a3a3a3;
+  --el-text-color-disabled: #bdbdbd;
+
+  --el-border-color: rgba(0, 0, 0, 0.12);
+  --el-border-color-light: rgba(0, 0, 0, 0.08);
+  --el-border-color-lighter: rgba(0, 0, 0, 0.06);
+  --el-border-color-extra-light: rgba(0, 0, 0, 0.04);
+
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f7f7f8;
+  --el-bg-color-overlay: #ffffff;
+  --el-fill-color-blank: #ffffff;
+  --el-fill-color-light: #f4f4f5;
+  --el-fill-color-lighter: #f8f8f9;
+  --el-fill-color: #f0f0f1;
+
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-font-family: var(--font-ui);
+}
+
+html.dark {
+  /* ================= 背景（深色：侧栏更暗，内容区亮一档） ================= */
+  --bg-page: #1a1a1a;
+  --bg-panel: #151515;
+  --bg-elevated: #242424;
+  --bg-sunken: #0f0f0f;
+  --bg-hover: rgba(255, 255, 255, 0.055);
+  --bg-active: rgba(255, 255, 255, 0.1);
+
+  /* ================= 文本 ================= */
+  --text-1: #ececec;
+  --text-2: #a6a6a6;
+  --text-3: #767676;
+
+  /* ================= 边框 ================= */
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* ================= 品牌（深色下提亮，保证在 #1a1a1a 上可辨） ================= */
+  --brand: #10a37f;
+  --brand-dark: #2bc79b;
+  --brand-bright: #2bc79b;
+  --brand-soft: rgba(16, 163, 127, 0.14);
+  --brand-soft-strong: rgba(16, 163, 127, 0.24);
+
+  --color-success: #3fb950;
+  --color-warning: #d29922;
+  --color-danger: #f85149;
+  --color-info: #8b949e;
+
+  --shadow-pop: 0 10px 34px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-inset-line: inset -1px 0 0 rgba(255, 255, 255, 0.05);
+
+  /* ================= Element Plus 暗色变体 =================
+     约定：light-N 变暗（作暗底 hover/选中），dark-2 变亮（作 hover 文字）。 */
+  --el-color-primary: #10a37f;
+  --el-color-primary-light-3: #1f7f66;
+  --el-color-primary-light-5: #1a6b56;
+  --el-color-primary-light-7: #154f41;
+  --el-color-primary-light-8: #123f35;
+  --el-color-primary-light-9: #0f2e28;
+  --el-color-primary-dark-2: #2bc79b;
+
+  --el-color-success: #2ea043;
+  --el-color-success-light-3: #23763a;
+  --el-color-success-light-5: #1c5e2f;
+  --el-color-success-light-7: #164825;
+  --el-color-success-light-8: #133a1e;
+  --el-color-success-light-9: #102b18;
+  --el-color-success-dark-2: #4dc163;
+
+  --el-color-warning: #d29922;
+  --el-color-warning-light-3: #8f6a17;
+  --el-color-warning-light-5: #725413;
+  --el-color-warning-light-7: #553f0f;
+  --el-color-warning-light-8: #45330c;
+  --el-color-warning-light-9: #33260a;
+  --el-color-warning-dark-2: #e0b04a;
+
+  --el-color-danger: #e5534b;
+  --el-color-danger-light-3: #a03a34;
+  --el-color-danger-light-5: #7f2e2a;
+  --el-color-danger-light-7: #5e2220;
+  --el-color-danger-light-8: #4c1b19;
+  --el-color-danger-light-9: #3a1513;
+  --el-color-danger-dark-2: #f0756e;
+
+  --el-color-error: #e5534b;
+  --el-color-error-light-3: #a03a34;
+  --el-color-error-light-5: #7f2e2a;
+  --el-color-error-light-7: #5e2220;
+  --el-color-error-light-8: #4c1b19;
+  --el-color-error-light-9: #3a1513;
+  --el-color-error-dark-2: #f0756e;
+
+  --el-color-info: #8b949e;
+  --el-color-info-light-3: #626a72;
+  --el-color-info-light-5: #4e545a;
+  --el-color-info-light-7: #3a3f43;
+  --el-color-info-light-8: #303438;
+  --el-color-info-light-9: #26292c;
+  --el-color-info-dark-2: #a2aab3;
+
+  /* 中性色阶：深色下按 #ececec → #3a3a3a 反序 */
+  --el-text-color-primary: #ececec;
+  --el-text-color-regular: #c9c9c9;
+  --el-text-color-secondary: #a6a6a6;
+  --el-text-color-placeholder: #6f6f6f;
+  --el-text-color-disabled: #5a5a5a;
+
+  --el-border-color: rgba(255, 255, 255, 0.16);
+  --el-border-color-light: rgba(255, 255, 255, 0.1);
+  --el-border-color-lighter: rgba(255, 255, 255, 0.08);
+  --el-border-color-extra-light: rgba(255, 255, 255, 0.05);
+
+  --el-bg-color: #1a1a1a;
+  --el-bg-color-page: #151515;
+  --el-bg-color-overlay: #242424;
+  --el-fill-color-blank: #1a1a1a;
+  --el-fill-color-light: #242424;
+  --el-fill-color-lighter: #1f1f1f;
+  --el-fill-color: #2a2a2a;
+}
+
+/* ================= 浅色皮肤（仅在非深色主题生效） =================
+   皮肤只覆盖品牌主色阶梯，不影响 Codex 的中性灰骨架。
+   色值与 src/shared/skins.ts 同步维护。
+   注意：Codex 主视觉是深色，皮肤在深色下不生效（:not(.dark) 守卫）。 */
+html[data-skin='sakura']:not(.dark) {
+  --el-color-primary: #d4899d;
+  --el-color-primary-light-3: #dfa4b2;
+  --el-color-primary-light-5: #e9bcc6;
+  --el-color-primary-light-7: #f2d4da;
+  --el-color-primary-light-8: #f6e1e6;
+  --el-color-primary-light-9: #fbeef1;
+  --el-color-primary-dark-2: #bf7589;
+  --brand: #d4899d;
+  --brand-dark: #bf7589;
+  --brand-bright: #d4899d;
+  --brand-soft: rgba(212, 137, 157, 0.1);
+  --brand-soft-strong: rgba(212, 137, 157, 0.18);
+}
+
+html[data-skin='mint']:not(.dark) {
+  --el-color-primary: #7cb392;
+  --el-color-primary-light-3: #98c4a9;
+  --el-color-primary-light-5: #b3d5c0;
+  --el-color-primary-light-7: #cee5d7;
+  --el-color-primary-light-8: #d9ede0;
+  --el-color-primary-light-9: #e9f5ee;
+  --el-color-primary-dark-2: #6aa081;
+  --brand: #7cb392;
+  --brand-dark: #6aa081;
+  --brand-bright: #7cb392;
+  --brand-soft: rgba(124, 179, 146, 0.1);
+  --brand-soft-strong: rgba(124, 179, 146, 0.18);
+}
+
+html[data-skin='dusk']:not(.dark) {
+  --el-color-primary: #4d7ea8;
+  --el-color-primary-light-3: #7398b6;
+  --el-color-primary-light-5: #96b2c8;
+  --el-color-primary-light-7: #b8ccdb;
+  --el-color-primary-light-8: #c8d9e4;
+  --el-color-primary-light-9: #dbe6ee;
+  --el-color-primary-dark-2: #447094;
+  --brand: #4d7ea8;
+  --brand-dark: #447094;
+  --brand-bright: #4d7ea8;
+  --brand-soft: rgba(77, 126, 168, 0.1);
+  --brand-soft-strong: rgba(77, 126, 168, 0.18);
+}
+
+html[data-skin='lemon']:not(.dark) {
+  --el-color-primary: #c4a465;
+  --el-color-primary-light-3: #d0ba8b;
+  --el-color-primary-light-5: #dcd0b0;
+  --el-color-primary-light-7: #e8e5d4;
+  --el-color-primary-light-8: #efeadd;
+  --el-color-primary-light-9: #f7f4ea;
+  --el-color-primary-dark-2: #b29355;
+  --brand: #c4a465;
+  --brand-dark: #b29355;
+  --brand-bright: #c4a465;
+  --brand-soft: rgba(196, 164, 101, 0.1);
+  --brand-soft-strong: rgba(196, 164, 101, 0.18);
+}

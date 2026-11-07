@@ -1,0 +1,24 @@
+/**
+ * 应用外壳基础样式（Codex 风格）
+ * 具体的字体栈 / 色彩 / 组件重塑见 assets/css/codex.css 与 tokens.css。
+ */
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  background: var(--bg-page);
+  color: var(--text-1);
+}
+
+#app {
+  height: 100%;
+}
+
+/* 禁用 Electron 默认的文本选择拖拽感（正文/预览区单独开启） */
+button,
+.cx-no-select {
+  user-select: none;
+}

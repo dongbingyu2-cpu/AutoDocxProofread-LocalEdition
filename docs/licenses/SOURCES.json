@@ -1,0 +1,92 @@
+[
+  {
+    "name": "@napi-rs/canvas-win32-x64-msvc",
+    "status": "supplemented",
+    "file": "_napi-rs_canvas-win32-x64-msvc.txt",
+    "url": "https://raw.githubusercontent.com/Brooooooklyn/canvas/v0.1.80/LICENSE"
+  },
+  {
+    "name": "@vue/devtools-api",
+    "status": "supplemented",
+    "file": "_vue_devtools-api.txt",
+    "url": "https://raw.githubusercontent.com/vuejs/vue-devtools/v6.6.4/LICENSE"
+  },
+  {
+    "name": "agent-base",
+    "status": "supplemented",
+    "file": "agent-base.txt",
+    "url": "https://raw.githubusercontent.com/TooTallNate/proxy-agents/master/packages/agent-base/LICENSE"
+  },
+  {
+    "name": "dingbat-to-unicode",
+    "status": "supplemented",
+    "file": "dingbat-to-unicode.txt",
+    "url": "https://raw.githubusercontent.com/mwilliamson/dingbat-to-unicode/master/js/LICENSE"
+  },
+  {
+    "name": "element-plus",
+    "status": "supplemented",
+    "file": "element-plus.txt",
+    "url": "https://raw.githubusercontent.com/element-plus/element-plus/2.11.1/LICENSE"
+  },
+  {
+    "name": "err-code",
+    "status": "supplemented",
+    "file": "err-code.txt",
+    "url": "https://raw.githubusercontent.com/IndigoUnited/js-err-code/v2.0.3/README.md"
+  },
+  {
+    "name": "https-proxy-agent",
+    "status": "supplemented",
+    "file": "https-proxy-agent.txt",
+    "url": "https://raw.githubusercontent.com/TooTallNate/proxy-agents/master/packages/https-proxy-agent/LICENSE"
+  },
+  {
+    "name": "imurmurhash",
+    "status": "supplemented",
+    "file": "imurmurhash.txt",
+    "url": "https://raw.githubusercontent.com/jensyt/imurmurhash-js/0.1.4/LICENSE"
+  },
+  {
+    "name": "isarray",
+    "status": "supplemented",
+    "file": "isarray.txt",
+    "url": "https://raw.githubusercontent.com/juliangruber/isarray/master/LICENSE"
+  },
+  {
+    "name": "lodash-unified",
+    "status": "package-metadata-only",
+    "license": "MIT",
+    "author": "Jack Works"
+  },
+  {
+    "name": "sqlite-vec-windows-x64",
+    "status": "supplemented",
+    "file": "sqlite-vec-windows-x64.txt",
+    "url": "https://raw.githubusercontent.com/asg017/sqlite-vec/v0.1.9/LICENSE-MIT"
+  },
+  {
+    "name": "@tootallnate/once",
+    "status": "supplemented",
+    "file": "_tootallnate_once.txt",
+    "url": "https://raw.githubusercontent.com/TooTallNate/once/master/LICENSE"
+  },
+  {
+    "name": "http-proxy-agent",
+    "status": "supplemented",
+    "file": "http-proxy-agent.txt",
+    "url": "https://raw.githubusercontent.com/TooTallNate/proxy-agents/master/packages/http-proxy-agent/LICENSE"
+  },
+  {
+    "name": "socks-proxy-agent",
+    "status": "supplemented",
+    "file": "socks-proxy-agent.txt",
+    "url": "https://raw.githubusercontent.com/TooTallNate/proxy-agents/master/packages/socks-proxy-agent/LICENSE"
+  },
+  {
+    "name": "tr46",
+    "status": "supplemented",
+    "file": "tr46.txt",
+    "url": "https://raw.githubusercontent.com/Sebmaster/tr46.js/master/LICENSE.md"
+  }
+]

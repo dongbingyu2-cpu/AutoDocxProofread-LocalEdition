@@ -1,0 +1,60 @@
+const { expect } = require('@playwright/test')
+const { launchPackaged } = require('./launchPackaged.cjs')
+const { acceptNativeDialog } = require('./acceptExport.cjs')
+const { makeFixture, verifyExport } = require('./validationFixture.cjs')
+const fs = require('node:fs/promises')
+const path = require('node:path')
+const assert = require('node:assert/strict')
+const root = path.resolve('.validation', `word-ui-${Date.now()}`)
+const report = { kind: 'REAL installed EXE + qwen3:8b + actual Word UI and native dialogs', checks: [] }
+let app
+function check(name, value) { assert.ok(value, name); report.checks.push(name); console.log('PASS', name) }
+async function main() {
+  await fs.mkdir(root, { recursive: true })
+  const info = JSON.parse(await fs.readFile('.validation/install-lifecycle.json', 'utf8'))
+  const source = path.join(root, 'gui-fixture.docx'), output = path.join(root, 'gui-export.docx')
+  await makeFixture(source)
+  app = await launchPackaged(info.finalExecutable, path.join(root, 'profile'))
+  const page = await app.firstWindow()
+  await page.evaluate(async () => {
+    const api = window.electronAPI
+    await api.APISettings('http://127.0.0.1:11434', '', 'qwen3:8b', 'ollama')
+    const profile = (await api.getALLAPISettings())[0], settings = await api.getLocalSettings()
+    settings.roles.proof = profile.id; settings.roles.reduce = profile.id; settings.roles.chat = profile.id
+    settings.contextLength = 16384; settings.maxTokens = 4096
+    await api.saveLocalSettings(settings)
+  })
+  await page.reload()
+  await page.getByTestId('document-model-select').click()
+  await page.getByRole('option').filter({ hasText: 'qwen3:8b' }).click()
+  const openDialog = acceptNativeDialog(app, source, '选择 DOCX 文件')
+  await Promise.all([page.getByRole('button', { name: '选择文件', exact: true }).click(), openDialog])
+  await page.locator('.file-name-tag').filter({ hasText: 'gui-fixture.docx' }).waitFor()
+  await page.locator('.preview-container').getByText('本地文档验收', { exact: true }).waitFor()
+  check('真实原生选择文件及 DOCX 前端预览', true)
+  await page.locator('.mode-select').click()
+  await page.getByRole('option', { name: '逐段校正', exact: true }).click()
+  await page.getByRole('button', { name: '开始校正', exact: true }).click()
+  const exportButton = page.getByRole('button', { name: '导出结果', exact: true })
+  // 本地模型冷加载与多段串行处理可能超过两分钟；验收等待不改变产品请求超时。
+  await expect(exportButton).toBeEnabled({ timeout: 600000 })
+  const selected = await page.evaluate(() => window.electronAPI.getAPISettings())
+  check('校对按钮使用文档页所选 Ollama 模型', selected.modelName === 'qwen3:8b' && selected.provider === 'ollama')
+  check('真实校对完成并显示可导出建议', true)
+  await page.locator('.apply-changes-btn').click()
+  await page.locator('.el-dropdown-menu__item').filter({ hasText: '应用全部修改' }).click()
+  await expect.poll(async () => (await page.locator('.preview-container').innerText()).includes('错务'), { timeout: 10000 }).toBe(false)
+  check('应用全部修改后预览更新', true)
+  await page.screenshot({ path: path.join(root, 'applied-preview.png'), animations: 'disabled' })
+  const saveDialog = acceptNativeDialog(app, output)
+  await Promise.all([exportButton.click(), saveDialog])
+  await expect.poll(async () => { try { return (await fs.stat(output)).size > 0 } catch { return false } }, { timeout: 10000 }).toBe(true)
+  report.wordFormat = await verifyExport(source, output)
+  check('界面导出按钮及原生保存写出真实 Word', true)
+  check('界面应用的修改实际回写，格式部件保持', report.wordFormat.unchangedParts === 5)
+}
+main().catch(async error => { report.error = String(error.stack || error); console.error(error); process.exitCode = 1; if (app) { const page = await app.firstWindow(); report.rendererText = await page.locator('body').innerText().catch(() => ''); await page.screenshot({ path: path.join(root, 'failure.png') }).catch(() => {}) } }).finally(async () => {
+  if (app) await app.close().catch(() => {})
+  await fs.writeFile(path.join(root, 'report.json'), JSON.stringify(report, null, 2))
+  console.log('REPORT', path.join(root, 'report.json'))
+})

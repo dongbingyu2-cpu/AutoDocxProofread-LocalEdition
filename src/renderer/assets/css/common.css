@@ -1,0 +1,448 @@
+/**
+ * 全应用公共样式（Codex 风格重构版，2026-11）
+ *
+ * 这里只放「多个组件共用」的类，避免在各 scoped 里重复拷贝。
+ * 配色一律取 tokens.css 变量，禁止再写死 #fff / #1d1e1f。
+ */
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* 画布跟随主题：useDark 只在 html 上切 .dark 类 */
+html {
+  background-color: var(--bg-page);
+  color: var(--text-1);
+}
+
+html.dark {
+  background-color: var(--bg-page);
+  color: var(--text-1);
+  color-scheme: dark;
+}
+
+/* ================= 滚动条：Codex 式「几乎看不见，hover 才显形」 ================= */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  /* 用透明边框收窄视觉宽度，剩余空间留给 hover 反馈 */
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 细滚动条变体：侧栏、下拉面板等窄容器 */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* ================= 顶栏无边框紧凑按钮（DocPreview / RecentFiles 共用） ================= */
+.bar-btn {
+  height: 30px;
+  padding: 0 8px;
+  margin-left: 0 !important;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: transparent;
+  border: none;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.bar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-1);
+}
+
+.bar-btn .el-icon {
+  font-size: 14px;
+}
+
+/* ================= 「选择文件」分体按钮 （RecentFiles.vue） ================= */
+.select-file-split {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.select-file-split .el-button:first-child {
+  padding-right: 4px;
+}
+
+.select-file-split-trigger {
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.select-file-split-trigger .el-icon {
+  font-size: 14px;
+}
+
+/* ================= 设置区公共版式 =================
+   Codex 风：无阴影、细边框、标题走小字号 + 次要色，正文区留白。 */
+.setting-section {
+  margin-bottom: 12px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  color: var(--text-1);
+  margin-bottom: 14px;
+}
+
+.section-header .el-icon {
+  color: var(--brand);
+  font-size: 15px;
+}
+
+html.dark .section-header .el-icon {
+  color: var(--brand-bright);
+}
+
+.tooltip-icon {
+  color: var(--text-3);
+  cursor: help;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.tooltip-icon:hover {
+  color: var(--brand);
+}
+
+html.dark .tooltip-icon:hover {
+  color: var(--brand-bright);
+}
+
+/* 「低调按钮」：次要操作，hover 才给底 */
+.btn-subtle {
+  color: var(--text-2);
+  border-color: var(--border-color);
+  background: transparent;
+}
+
+.btn-subtle:hover {
+  color: var(--text-1);
+  border-color: var(--border-strong);
+  background: var(--bg-hover);
+}
+
+/* ================= 设置卡片说明的悬停气泡 =================
+   （el-tooltip popper-class，挂在 body 层，只能全局定义） */
+.settings-hint-popper {
+  max-width: 320px;
+  line-height: 1.6;
+}
+
+/* ================= 校对类型色板 =================
+   类后缀统一为规范英文 key（src/shared/correctionTypes.ts 负责归一）。
+   Codex 风：pill 形状、无边框、12px、低饱和。深色下用透明度反相，
+   同一组变量在明暗两套里都能读。 */
+.type-typo,
+.type-worderror {
+  --type-badge-bg: rgba(229, 83, 75, 0.12);
+  --type-badge-text: #c0453e;
+}
+
+.type-punctuation {
+  --type-badge-bg: rgba(210, 153, 34, 0.14);
+  --type-badge-text: #9a6f10;
+}
+
+.type-grammar {
+  --type-badge-bg: rgba(56, 139, 253, 0.12);
+  --type-badge-text: #2f6fbf;
+}
+
+.type-consistency {
+  --type-badge-bg: rgba(139, 148, 158, 0.16);
+  --type-badge-text: #5c646c;
+}
+
+.type-comprehensiveerror,
+.type-polish {
+  --type-badge-bg: rgba(46, 160, 67, 0.13);
+  --type-badge-text: #237a33;
+}
+
+.type-reduceai {
+  --type-badge-bg: rgba(163, 113, 247, 0.14);
+  --type-badge-text: #7c4dbe;
+}
+
+/* 只负责「配色」，不负责形状。
+   注意：.correction-item 这类容器也会同时挂 type-* 类（用于高亮/分组），
+   若在这里写 display / height / padding，会把整行条目压成 pill —— 形状交给
+   .correction-type / .category-badge 等具体元素自己定义。 */
+.type-typo,
+.type-worderror,
+.type-punctuation,
+.type-grammar,
+.type-consistency,
+.type-comprehensiveerror,
+.type-polish,
+.type-reduceai {
+  background-color: var(--type-badge-bg);
+  color: var(--type-badge-text);
+  border: none;
+}
+
+/* 深色下提亮文字、降低底色存在感 */
+html.dark .type-typo,
+html.dark .type-worderror {
+  --type-badge-bg: rgba(248, 81, 73, 0.16);
+  --type-badge-text: #ff8b84;
+}
+
+html.dark .type-punctuation {
+  --type-badge-bg: rgba(210, 153, 34, 0.16);
+  --type-badge-text: #e3b341;
+}
+
+html.dark .type-grammar {
+  --type-badge-bg: rgba(56, 139, 253, 0.16);
+  --type-badge-text: #79b8ff;
+}
+
+html.dark .type-consistency {
+  --type-badge-bg: rgba(139, 148, 158, 0.18);
+  --type-badge-text: #a8b0b8;
+}
+
+html.dark .type-comprehensiveerror,
+html.dark .type-polish {
+  --type-badge-bg: rgba(63, 185, 80, 0.16);
+  --type-badge-text: #6fd07f;
+}
+
+html.dark .type-reduceai {
+  --type-badge-bg: rgba(163, 113, 247, 0.18);
+  --type-badge-text: #c297ff;
+}
+
+/* ================= 批量应用下拉的类型标识 =================
+   简约形式：无边框、无填充，仅以文字颜色区分；等宽宽度对齐。 */
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 56px;
+  padding: 1px 8px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.category-typo,
+.category-worderror {
+  color: #c0453e;
+}
+
+.category-punctuation {
+  color: #9a6f10;
+}
+
+.category-grammar {
+  color: #2f6fbf;
+}
+
+.category-consistency {
+  color: #5c646c;
+}
+
+.category-comprehensiveerror,
+.category-polish {
+  color: #237a33;
+}
+
+.category-reduceai {
+  color: #7c4dbe;
+}
+
+html.dark .category-typo,
+html.dark .category-worderror {
+  color: #ff8b84;
+}
+
+html.dark .category-punctuation {
+  color: #e3b341;
+}
+
+html.dark .category-grammar {
+  color: #79b8ff;
+}
+
+html.dark .category-consistency {
+  color: #a8b0b8;
+}
+
+html.dark .category-comprehensiveerror,
+html.dark .category-polish {
+  color: #6fd07f;
+}
+
+html.dark .category-reduceai {
+  color: #c297ff;
+}
+
+/* ================= 预览高亮 =================
+   DocPreview 与 Proof 共用，不依赖「校对页已挂载」才有样式。
+   Codex 风：不用整块黄底，改为「淡色底 + 左侧 2px 竖条」，
+   避免长文档满屏黄斑；hover 才加深并浮起。 */
+.highlight-correction {
+  --highlight-bg: rgba(16, 163, 127, 0.14);
+  --highlight-bg-hover: rgba(16, 163, 127, 0.24);
+  --highlight-bg-focus: rgba(16, 163, 127, 0.34);
+  --highlight-border: #10a37f;
+  --highlight-ring: rgba(16, 163, 127, 0.26);
+  background-color: var(--highlight-bg) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--highlight-border) 55%, transparent) !important;
+  cursor: pointer !important;
+  padding: 0 2px !important;
+  border-radius: 3px !important;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-base) var(--ease) !important;
+}
+
+.highlight-correction:hover {
+  box-shadow: 0 0 0 2px var(--highlight-ring) !important;
+  background-color: var(--highlight-bg-hover) !important;
+}
+
+.highlight-correction-focused {
+  background-color: var(--highlight-bg-focus) !important;
+  animation: correction-highlight-pulse 0.8s var(--ease) 2 !important;
+}
+
+.highlight-type-typo,
+.highlight-type-worderror {
+  --highlight-bg: rgba(248, 81, 73, 0.14);
+  --highlight-bg-hover: rgba(248, 81, 73, 0.24);
+  --highlight-bg-focus: rgba(248, 81, 73, 0.32);
+  --highlight-border: #f85149;
+  --highlight-ring: rgba(248, 81, 73, 0.26);
+}
+
+.highlight-type-punctuation {
+  --highlight-bg: rgba(210, 153, 34, 0.15);
+  --highlight-bg-hover: rgba(210, 153, 34, 0.25);
+  --highlight-bg-focus: rgba(210, 153, 34, 0.34);
+  --highlight-border: #d29922;
+  --highlight-ring: rgba(210, 153, 34, 0.24);
+}
+
+.highlight-type-grammar {
+  --highlight-bg: rgba(56, 139, 253, 0.14);
+  --highlight-bg-hover: rgba(56, 139, 253, 0.24);
+  --highlight-bg-focus: rgba(56, 139, 253, 0.32);
+  --highlight-border: #388bfd;
+  --highlight-ring: rgba(56, 139, 253, 0.26);
+}
+
+.highlight-type-consistency {
+  --highlight-bg: rgba(139, 148, 158, 0.16);
+  --highlight-bg-hover: rgba(139, 148, 158, 0.26);
+  --highlight-bg-focus: rgba(139, 148, 158, 0.34);
+  --highlight-border: #8b949e;
+  --highlight-ring: rgba(139, 148, 158, 0.24);
+}
+
+.highlight-type-comprehensiveerror,
+.highlight-type-polish {
+  --highlight-bg: rgba(46, 160, 67, 0.14);
+  --highlight-bg-hover: rgba(46, 160, 67, 0.24);
+  --highlight-bg-focus: rgba(46, 160, 67, 0.32);
+  --highlight-border: #2ea043;
+  --highlight-ring: rgba(46, 160, 67, 0.26);
+}
+
+.highlight-type-reduceai {
+  --highlight-bg: rgba(163, 113, 247, 0.15);
+  --highlight-bg-hover: rgba(163, 113, 247, 0.25);
+  --highlight-bg-focus: rgba(163, 113, 247, 0.34);
+  --highlight-border: #a371f7;
+  --highlight-ring: rgba(163, 113, 247, 0.26);
+}
+
+@keyframes correction-highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--highlight-ring);
+  }
+  55% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--highlight-border) 22%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--highlight-ring);
+  }
+}
+
+/* ================= Codex 通用原子类 =================
+   新页面优先用这些，减少每个页面重写一遍 padding/字号。 */
+.cx-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cx-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.cx-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.cx-divider {
+  height: 1px;
+  background: var(--border-color);
+  border: none;
+  margin: 0;
+}

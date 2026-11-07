@@ -1,0 +1,26 @@
+<!-- 本地版独立图标原稿：文档与校对勾选，无文字以保证小尺寸识别。 -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="tile" x1="24" y1="18" x2="224" y2="240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15344C"/>
+      <stop offset="1" stop-color="#0B3435"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="64" y1="48" x2="184" y2="208" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EDF6F4"/>
+    </linearGradient>
+    <linearGradient id="check" x1="148" y1="148" x2="224" y2="224" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#27D5A1"/>
+      <stop offset="1" stop-color="#08A67C"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#tile)"/>
+  <rect x="9" y="9" width="238" height="238" rx="53" fill="none" stroke="#3C6A76" stroke-opacity=".32" stroke-width="2"/>
+  <path d="M73 48H148L188 88V196Q188 210 174 210H73Q59 210 59 196V62Q59 48 73 48Z" fill="#031A26" opacity=".22" transform="translate(0 5)"/>
+  <path d="M73 43H148L188 83V191Q188 205 174 205H73Q59 205 59 191V57Q59 43 73 43Z" fill="url(#paper)"/>
+  <path d="M148 43V71Q148 83 160 83H188Z" fill="#C9E3DF"/>
+  <path d="M83 108H155M83 133H132M83 158H114" fill="none" stroke="#83A89F" stroke-width="8" stroke-linecap="round"/>
+  <rect x="139" y="142" width="88" height="88" rx="29" fill="#062C2D" opacity=".35" transform="translate(0 4)"/>
+  <rect x="139" y="138" width="88" height="88" rx="29" fill="url(#check)"/>
+  <path d="M160 181L177 198L207 164" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,294 @@
+/**
+ * Electron API 类型支持应与 preload.ts 中的API一致
+ * 你需要告诉 TypeScript,windows 类型中心增加的属性和接口情况
+ * 防止运行时错误
+ */
+import { proofreadLargeDocument, ProofreadingCorrection } from './proof'
+import { apiSettings } from './ipcHandlers'
+import { ProofreadProgressPayload, ProofreadStreamPayload } from '../shared/proofreadProgress'
+import { PromptSettings } from '../shared/promptSettings'
+import type { OllamaDownloadState } from '../shared/ollamaDownload'
+
+export interface proofHistory {  id?: number
+  filePath: string
+  apiURL: string
+  modelName: string
+  created_at?: string
+  result: string
+}
+
+// LanceDB 相关接口类型定义
+/** 工作区文档（主进程 workspace_documents 表的投影，附带文件是否仍存在） */
+export interface WorkspaceDoc {
+  id: number
+  filePath: string
+  fileName: string
+  status: 'imported' | 'proofed' | 'exported'
+  proofCount: number
+  /** 历次校对产生的建议条数累计（非用户采纳数） */
+  suggestionCount: number
+  exportCount: number
+  lastProofAt?: string | null
+  lastExportPath?: string | null
+  createdAt?: string
+  updatedAt?: string
+  /** 由主进程探测：源文件是否还在磁盘上 */
+  fileExists?: boolean
+}
+
+/** 从工作区恢复文档到校对页的返回结构 */
+export type WorkspaceRestoreResult =
+  | {
+      success: true
+      filePath: string
+      fileName: string
+      modelName: string
+      results: any[]
+    }
+  | {
+      success: false
+      reason: 'not-found' | 'file-missing'
+      doc?: WorkspaceDoc
+    }
+
+export interface LanceDBInsertParams {
+  repositoryName: string
+  fileName: string
+  text: string
+  metadata: Record<string, any>
+}
+
+export interface LanceDBQueryParams {
+  queryText: string
+  limit: number
+  filter: string
+  fileName: string
+}
+
+export interface LanceDBUpdateParams {
+  repositoryName: string
+  id: number
+  text: string
+  metadata: Record<string, any>
+}
+
+export interface LanceDBDeleteParams {
+  repositoryName: string
+  id: number
+}
+
+export interface ModelConfig {
+  modelName: string
+  apiKey: string
+  apiURL: string
+}
+
+export interface PDFProcessParams {
+  repositoryName: string
+  filePath: string
+  metadata: Record<string, any>
+}
+
+export interface PDFSelectAndProcessParams {
+  repositoryName: string
+  metadata: Record<string, any>
+}
+
+export interface PDFGetChunksParams {
+  documentId: string
+  repositoryName: string
+}
+
+export interface ExportCorrectedDocxResult {
+  success: boolean
+  canceled: boolean
+  filePath?: string
+  appliedCount?: number
+  /** 未能在文档中匹配到原文的建议条数 */
+  unmatchedCount?: number
+}
+
+/** 校对过程中失败的分片（与主进程 proof.ts 的 FailedSegment 对应） */
+export interface FailedSegment {
+  stage: 'proofread' | 'reduce' | 'review'
+  index: number
+  label: string
+  message: string
+}
+
+export default interface ElectronApi {
+  getLocalSettings: () => Promise<import('../shared/localEdition').LocalEditionSettings>
+  saveLocalSettings: (value: unknown) => Promise<import('../shared/localEdition').LocalEditionSettings>
+  discoverOllama: (url?: string) => Promise<{ success: boolean; models: { name: string; size?: number }[]; message?: string }>
+  downloadOllamaModel: (value: { model: string; url?: string }) => Promise<OllamaDownloadState>
+  getOllamaDownloadState: () => Promise<OllamaDownloadState | null>
+  cancelOllamaDownload: (id: string) => Promise<boolean>
+  onOllamaDownloadProgress: (callback: (value: OllamaDownloadState) => void) => () => void
+  getLocalEmbeddingConfig: () => Promise<any>
+  generateLocalText: (value: { id: string; text: string; stream?: boolean }) => Promise<{ result: string; total_tokens: number }>
+  cancelLocalText: (id: string) => Promise<void>
+  onLocalTextChunk: (callback: (value: { id: string; chunk: string }) => void) => () => void
+  // test
+  message: (file: string) => void
+  receiveAndReturn: (characters: string) => string
+  test: string
+  // 文档加载
+  selectDocxFile: () => string
+  readDocxFile: (filePath: string) => Promise<{
+    path: string
+    buffer: Uint8Array
+  }>
+  extractDocxText: (filePath: string) => Promise<{
+    success: boolean
+    text?: string
+    error?: string
+  }>
+  // api设置和管理（接入数据库）
+  APISettings: (URL: string, Key: string, modelName: string, provider?: string) => Promise<string>
+  updateAPISetting: (id: number, URL: string, Key: string, modelName: string, provider?: string) => Promise<boolean>
+  getAPISettings: () => Promise<{
+    URL: string
+    Key: string
+    modelName: string
+    provider?: string
+    parallel?: number
+    TimeLimit?: number | null
+  }>
+  deleteOneAPI: (id: number) => Promise<{
+    isSuccess: boolean
+  }>
+  getALLAPISettings: () => Promise<
+    {
+      id: number
+      apiURL: string
+      apiKey: string
+      modelName: string
+      provider?: string
+      created_at: string
+    }[]
+  >
+  testAPI: (url: string, key: string, modelName: string) => Promise<boolean>
+  testAPIWithProvider: (provider: string, url: string, key: string, modelName: string) => Promise<boolean>
+  selectAPISetting: (
+    url: string,
+    key: string,
+    modelName: string,
+    parallel?: number,
+    TimeLimit?: number | null,
+    provider?: string,
+    requestTimeoutSec?: number | null,
+    thinkingMode?: 'default' | 'enabled' | 'disabled'
+  ) => Promise<boolean>
+
+  // 文档处理接口
+  processDocx: (
+    model: string,
+    filePath: string,
+    repositoryNameList?: string[],
+    embeddingConfig?: apiSettings,
+    requestsPerMinute?: number,
+    parallelSet?: number,
+    reviewModelId?: number | null,
+    runId?: string,
+    reviewEnabled?: boolean
+  ) => Promise<{
+    proofResult: ProofreadingCorrection[]
+    token_usage: number
+    cancelled?: boolean
+    message?: string
+    failedSegments?: FailedSegment[]
+  }>
+  // 取消当前校对任务（按 runId 精确取消；不传则取消全部活跃任务）
+  cancelProofread: (runId?: string) => Promise<void>
+  onProofreadProgress: (callback: (payload: ProofreadProgressPayload) => void) => () => void
+  offProofreadProgress: (callback: (payload: ProofreadProgressPayload) => void) => void
+  // 流式输出事件：LLM 增量文本（kind=chunk）与分段完成（kind=segment）
+  onProofreadStream: (callback: (payload: ProofreadStreamPayload) => void) => () => void
+  offProofreadStream: (callback: (payload: ProofreadStreamPayload) => void) => void
+  exportCorrectedDocx: (config: any) => Promise<ExportCorrectedDocxResult>
+
+  // 提示词处理接口
+  getDefaultPrompt: () => Promise<string>
+  getPromptSettings: () => Promise<PromptSettings>
+  setPromptSettings: (settings: PromptSettings) => Promise<boolean>
+  getEffectivePrompt: () => Promise<string>
+  resetPromptSettings: () => Promise<boolean>
+  setNewPrompt: (newPrompt: string) => Promise<boolean>
+
+  // 历史记录接口
+  getHistoryPage: (page: number, pageSize: number, keyword?: string) => Promise<{ items: proofHistory[]; total: number }>
+  deleteAllHistory: () => Promise<boolean>
+  getHistoryById: (id: number) => Promise<proofHistory | null>
+  deleteHistoryById: (id: number) => Promise<boolean>
+  insertOneHistory: (filePath: string, apiURL: string, modelName: string, resultCorrect: string) => Promise<boolean>
+
+  // LanceDB 相关接口
+  lancedbInsert: (params: LanceDBInsertParams, modelConfig: ModelConfig) => Promise<any>
+  lancedbQuery: (params: LanceDBQueryParams, modelConfig: ModelConfig) => Promise<any>
+  lancedbUpdate: (params: LanceDBUpdateParams, modelConfig: ModelConfig) => Promise<any>
+  lancedbDelete: (params: LanceDBDeleteParams) => Promise<any>
+  listRepositories: () => Promise<string[]>
+  createRepository: (params: {
+    repositoryName: string
+    modelName: string
+    apiKey: string
+    apiURL: string
+  }) => Promise<boolean>
+  deleteRepository: (repositoryName: string) => Promise<boolean>
+  deleteDocumentByName: (repositoryName: string, filename: string) => Promise<string>
+  listFilenamesInRepository: (repositoryName: string) => Promise<string[]>
+
+  // PDF 处理相关接口
+  processPDF: (params: PDFProcessParams, modelConfig: ModelConfig) => Promise<any>
+  selectAndProcessPDF: (repositoryName: string, modelConfig: ModelConfig) => Promise<any> // 支持处理pdf、txt、docx文件
+  getPDFChunks: (params: PDFGetChunksParams) => Promise<any>
+  // 设置embedding api
+  getEmbeddingAPI: () => Promise<{ URL: string; Key: string; modelName: string }>
+  setEmbeddingAPI: (apiKey: string, apiURL: string, modelName: string) => Promise<boolean>
+  getEnvPath: () => Promise<string>
+  /** 应用版本号（主进程 app.getVersion()），状态栏展示用 */
+  getAppVersion: () => Promise<string>
+  /** 数据存放位置，关于页展示用 */
+  getDataPaths: () => Promise<{
+    userData: string
+    database: string
+    logs: string
+    knowledge: string
+  }>
+
+  // ---- 工作区 ----
+  workspaceList: (keyword?: string) => Promise<WorkspaceDoc[]>
+  workspaceTouch: (filePath: string, fileName: string) => Promise<boolean>
+  workspaceRemove: (id: number) => Promise<boolean>
+  workspaceRestore: (id: number) => Promise<WorkspaceRestoreResult>
+  workspaceReveal: (filePath: string) => Promise<boolean>
+  workspaceOpenExport: (filePath: string) => Promise<boolean>
+
+  // 代理设置相关接口
+  setProxySettings: (
+    enabled: boolean,
+    port: number
+  ) => Promise<{
+    success: boolean
+    error?: string
+  }>
+  getProxySettings: () => Promise<{
+    enabled: boolean
+    port: number
+  }>
+
+  sendLocale: (locale: string) => void
+
+  // 窗口控制接口
+  minimizeWindow: () => Promise<void>
+  toggleMaximizeWindow: () => Promise<boolean>
+  closeWindow: () => Promise<void>
+  isWindowMaximized: () => Promise<boolean>
+  onWindowMaximizeChange: (callback: (isMaximized: boolean) => void) => () => void
+}
+
+declare global {
+  interface Window {
+    electronAPI: ElectronApi
+  }
+}

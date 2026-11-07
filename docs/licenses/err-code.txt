@@ -1,0 +1,7 @@
+Package: err-code@2.0.3
+Source: https://raw.githubusercontent.com/IndigoUnited/js-err-code/v2.0.3/README.md
+Ref: v2.0.3 (version ref)
+
+## License
+
+Released under the [MIT License](http://www.opensource.org/licenses/mit-license.php).

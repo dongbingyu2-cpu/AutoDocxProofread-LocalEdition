@@ -1,0 +1,105 @@
+{
+  "name": "autodocxproofread-localedition",
+  "productName": "AutoDocxProofread-LocalEdition",
+  "version": "1.4.0-local.1",
+  "description": "An intelligent long-document proofreading software powered by large language models. 基于大模型的简单的docx格式文档的校对",
+  "main": "./out/main/main.js",
+  "scripts": {
+    "dev": "electron-vite dev --watch",
+    "build": "electron-vite build",
+    "build:win": "node scripts/third-party-notices.cjs && electron-vite build && node scripts/build-windows.cjs",
+    "prebuild:win": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ensure-electron.ps1 && node scripts/ensure-native.cjs",
+    "test:desktop": "node scripts/desktop-smoke.cjs",
+    "test:word": "node __tests__/wordProcess.test.js",
+    "test:real": "node scripts/real-ollama.cjs",
+    "release-major": "standard-version --release-as major",
+    "release-minor": "standard-version --release-as minor",
+    "release-patch": "standard-version --release-as patch",
+    "lint:fix": "eslint --ext .js,.ts,.vue . --fix",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "commit": "git add . && git-cz",
+    "pretest": "node scripts/create-test-fixtures.cjs"
+  },
+  "eslintConfig": {
+    "extends": "./.eslintrc.js"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@electron/fuses": "^1.8.0",
+    "@intlify/unplugin-vue-i18n": "^11.0.7",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.3.1",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "electron": "30.0.2",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "eslint": "^8.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.25.0",
+    "eslint-plugin-vue": "^9.25.0",
+    "git-cz": "^4.9.0",
+    "husky": "^9.0.11",
+    "jszip": "^3.10.1",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "standard-version": "^9.5.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.0.12",
+    "vitest": "^1.6.0"
+  },
+  "keywords": [],
+  "author": {
+    "name": "CZ600",
+    "url": "https://github.com/CZ600"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
+    "@google/genai": "^1.17.0",
+    "@google/generative-ai": "^0.24.1",
+    "@vueuse/core": "^14.0.0",
+    "axios": "^1.11.0",
+    "docx-edit": "^0.3.2",
+    "docx-preview": "^0.3.6",
+    "element-plus": "^2.11.1",
+    "mammoth": "^1.11.0",
+    "openai": "^5.19.1",
+    "pdf-parse": "^2.1.7",
+    "pinia": "^3.0.3",
+    "pinia-plugin-persistedstate": "^4.5.0",
+    "sqlite": "^5.1.1",
+    "sqlite-vec-windows-x64": "^0.1.9",
+    "sqlite3": "^5.1.7",
+    "uuid": "^13.0.0",
+    "vue": "^3.4.27",
+    "vue-i18n": "^11.3.0",
+    "vue-router": "^4.5.1",
+    "vue-scrollto": "^2.20.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue}": "npm run lint:fix"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "git-cz"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dongbingyu2-cpu/AutoDocxProofread-LocalEdition.git"
+  },
+  "homepage": "https://github.com/dongbingyu2-cpu/AutoDocxProofread-LocalEdition#readme",
+  "bugs": {
+    "url": "https://github.com/dongbingyu2-cpu/AutoDocxProofread-LocalEdition/issues"
+  }
+}
